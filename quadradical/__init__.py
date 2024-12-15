@@ -76,10 +76,35 @@ class QuadraticRadical(Real):
         return type(self).__name__ + "(" + ", ".join(rl) + ")"
 
     def __float__(self) -> float:
-        res: float = 0.
-        for k, v in self.quantity.items():
-            res += float(v) * k ** 0.5
-        return res
+        a: Optional[Fraction] = self.rational()
+        if a is not None:
+            return float(a)
+        sqrt_approx_ge: Dict[int, Fraction] = {}
+        sqrt_approx_lt: Dict[int, Fraction] = {}
+        for i in self.quantity:
+            sqrt_approx_ge[i] = _sqrt(i)
+            if sqrt_approx_ge[i].denominator == 1:
+                sqrt_approx_lt[i] = sqrt_approx_ge[i]
+            else:
+                a = _sqrt(i, 1, sqrt_approx_ge[i])
+                sqrt_approx_lt[i] = a * 2 - sqrt_approx_ge[i]
+                sqrt_approx_ge[i] = a
+        while True:
+            sum_approx_lt = sum((v*sqrt_approx_ge[k] if v < 0 else
+                                 v*sqrt_approx_lt[k] for k, v in
+                                 self.quantity.items()), Fraction(0))
+            sum_approx_ge = sum((v*sqrt_approx_lt[k] if v < 0 else
+                                 v*sqrt_approx_ge[k] for k, v in
+                                 self.quantity.items()), Fraction(0))
+            b = float(sum_approx_lt)
+            if b == float(sum_approx_ge):
+                return b
+            for i in self.quantity:
+                if sqrt_approx_ge[i].denominator != 1:
+                    a = _sqrt(i, 1, sqrt_approx_ge[i])
+                    sqrt_approx_lt[i] = a if a.denominator == 1 \
+                        else a * 2 - sqrt_approx_ge[i]
+                    sqrt_approx_ge[i] = a
 
     def __int__(self) -> int:
         a: Optional[Fraction] = self.rational()
@@ -89,7 +114,7 @@ class QuadraticRadical(Real):
         sqrt_approx_lt: Dict[int, Fraction] = {}
         for i in self.quantity:
             sqrt_approx_ge[i] = _sqrt(i)
-            if sqrt_approx_ge[i].as_integer_ratio()[1] == 1:
+            if sqrt_approx_ge[i].denominator == 1:
                 sqrt_approx_lt[i] = sqrt_approx_ge[i]
             else:
                 a = _sqrt(i, 1, sqrt_approx_ge[i])
@@ -106,9 +131,9 @@ class QuadraticRadical(Real):
             if b == int(sum_approx_ge):
                 return b
             for i in self.quantity:
-                if sqrt_approx_ge[i].as_integer_ratio()[1] != 1:
+                if sqrt_approx_ge[i].denominator != 1:
                     a = _sqrt(i, 1, sqrt_approx_ge[i])
-                    sqrt_approx_lt[i] = a if a.as_integer_ratio()[1] == 1 \
+                    sqrt_approx_lt[i] = a if a.denominator == 1 \
                         else a * 2 - sqrt_approx_ge[i]
                     sqrt_approx_ge[i] = a
 
@@ -120,7 +145,7 @@ class QuadraticRadical(Real):
         sqrt_approx_lt: Dict[int, Fraction] = {}
         for i in self.quantity:
             sqrt_approx_ge[i] = _sqrt(i)
-            if sqrt_approx_ge[i].as_integer_ratio()[1] == 1:
+            if sqrt_approx_ge[i].denominator == 1:
                 sqrt_approx_lt[i] = sqrt_approx_ge[i]
             else:
                 a = _sqrt(i, 1, sqrt_approx_ge[i])
@@ -137,9 +162,9 @@ class QuadraticRadical(Real):
             if b == math.floor(sum_approx_ge):
                 return b
             for i in self.quantity:
-                if sqrt_approx_ge[i].as_integer_ratio()[1] != 1:
+                if sqrt_approx_ge[i].denominator != 1:
                     a = _sqrt(i, 1, sqrt_approx_ge[i])
-                    sqrt_approx_lt[i] = a if a.as_integer_ratio()[1] == 1 \
+                    sqrt_approx_lt[i] = a if a.denominator == 1 \
                         else a * 2 - sqrt_approx_ge[i]
                     sqrt_approx_ge[i] = a
 
@@ -151,7 +176,7 @@ class QuadraticRadical(Real):
         sqrt_approx_lt: Dict[int, Fraction] = {}
         for i in self.quantity:
             sqrt_approx_ge[i] = _sqrt(i)
-            if sqrt_approx_ge[i].as_integer_ratio()[1] == 1:
+            if sqrt_approx_ge[i].denominator == 1:
                 sqrt_approx_lt[i] = sqrt_approx_ge[i]
             else:
                 a = _sqrt(i, 1, sqrt_approx_ge[i])
@@ -168,9 +193,9 @@ class QuadraticRadical(Real):
             if b == math.ceil(sum_approx_ge):
                 return b
             for i in self.quantity:
-                if sqrt_approx_ge[i].as_integer_ratio()[1] != 1:
+                if sqrt_approx_ge[i].denominator != 1:
                     a = _sqrt(i, 1, sqrt_approx_ge[i])
-                    sqrt_approx_lt[i] = a if a.as_integer_ratio()[1] == 1 \
+                    sqrt_approx_lt[i] = a if a.denominator == 1 \
                         else a * 2 - sqrt_approx_ge[i]
                     sqrt_approx_ge[i] = a
 
@@ -192,7 +217,7 @@ class QuadraticRadical(Real):
         sqrt_approx_lt: Dict[int, Fraction] = {}
         for i in self.quantity:
             sqrt_approx_ge[i] = _sqrt(i)
-            if sqrt_approx_ge[i].as_integer_ratio()[1] == 1:
+            if sqrt_approx_ge[i].denominator == 1:
                 sqrt_approx_lt[i] = sqrt_approx_ge[i]
             else:
                 a = _sqrt(i, 1, sqrt_approx_ge[i])
@@ -209,9 +234,9 @@ class QuadraticRadical(Real):
             if b == round(sum_approx_ge, ndigits):
                 return b if ndigits is None else QuadraticRadical(b)
             for i in self.quantity:
-                if sqrt_approx_ge[i].as_integer_ratio()[1] != 1:
+                if sqrt_approx_ge[i].denominator != 1:
                     a = _sqrt(i, 1, sqrt_approx_ge[i])
-                    sqrt_approx_lt[i] = a if a.as_integer_ratio()[1] == 1 \
+                    sqrt_approx_lt[i] = a if a.denominator == 1 \
                         else a * 2 - sqrt_approx_ge[i]
                     sqrt_approx_ge[i] = a
 
@@ -228,7 +253,7 @@ class QuadraticRadical(Real):
         if not self.quantity:
             return 0, 1
         if len(self.quantity) == 1 and next(iter(self.quantity)) == 1:
-            return self.quantity[1].as_integer_ratio()
+            return self.quantity[1].numerator, self.quantity[1].denominator
         raise ValueError("An irrational cannot be written as integer ratio")
 
     def rational(self) -> Optional[Fraction]:
@@ -256,7 +281,7 @@ class QuadraticRadical(Real):
             sqrt_approx_lt: Dict[int, Fraction] = {}
             for i in self.quantity:
                 sqrt_approx_ge[i] = _sqrt(i)
-                if sqrt_approx_ge[i].as_integer_ratio()[1] == 1:
+                if sqrt_approx_ge[i].denominator == 1:
                     sqrt_approx_lt[i] = sqrt_approx_ge[i]
                 else:
                     a = _sqrt(i, 1, sqrt_approx_ge[i])
@@ -274,9 +299,9 @@ class QuadraticRadical(Real):
                 if sum_approx_lt < 0 and sum_approx_ge < 0:
                     return -1
                 for i in self.quantity:
-                    if sqrt_approx_ge[i].as_integer_ratio()[1] != 1:
+                    if sqrt_approx_ge[i].denominator != 1:
                         a = _sqrt(i, 1, sqrt_approx_ge[i])
-                        sqrt_approx_lt[i] = a if a.as_integer_ratio()[1] == 1 \
+                        sqrt_approx_lt[i] = a if a.denominator == 1 \
                             else a * 2 - sqrt_approx_ge[i]
                         sqrt_approx_ge[i] = a
     else:
@@ -288,7 +313,7 @@ class QuadraticRadical(Real):
             sqrt_approx_lt: Dict[int, Fraction] = {}
             for i in self.quantity:
                 sqrt_approx_ge[i] = _sqrt(i)
-                if sqrt_approx_ge[i].as_integer_ratio()[1] == 1:
+                if sqrt_approx_ge[i].denominator == 1:
                     sqrt_approx_lt[i] = sqrt_approx_ge[i]
                 else:
                     a = _sqrt(i, 1, sqrt_approx_ge[i])
@@ -306,9 +331,9 @@ class QuadraticRadical(Real):
                 if sum_approx_lt < 0 and sum_approx_ge < 0:
                     return -1
                 for i in self.quantity:
-                    if sqrt_approx_ge[i].as_integer_ratio()[1] != 1:
+                    if sqrt_approx_ge[i].denominator != 1:
                         a = _sqrt(i, 1, sqrt_approx_ge[i])
-                        sqrt_approx_lt[i] = a if a.as_integer_ratio()[1] == 1 \
+                        sqrt_approx_lt[i] = a if a.denominator == 1 \
                             else a * 2 - sqrt_approx_ge[i]
                         sqrt_approx_ge[i] = a
 
@@ -324,8 +349,12 @@ class QuadraticRadical(Real):
     def __add__(self, other: Complex) -> complex:
         ...
     def __add__(self, other):
-        if isinstance(other, (Rational, float)):
+        if isinstance(other, float):
             return self + QuadraticRadical(Fraction(*other.as_integer_ratio()))
+        if isinstance(other, Rational):
+            return self + QuadraticRadical(Fraction(
+                int(other.numerator), int(other.denominator)
+            ))
         if not isinstance(other, QuadraticRadical):
             if isinstance(other, Real):
                 return float(self) + other
@@ -352,8 +381,12 @@ class QuadraticRadical(Real):
     def __sub__(self, other: Complex) -> complex:
         ...
     def __sub__(self, other):
-        if isinstance(other, (Rational, float)):
+        if isinstance(other, float):
             return self - QuadraticRadical(Fraction(*other.as_integer_ratio()))
+        if isinstance(other, Rational):
+            return self - QuadraticRadical(Fraction(
+                int(other.numerator), int(other.denominator)
+            ))
         if not isinstance(other, QuadraticRadical):
             if isinstance(other, Real):
                 return float(self) - other
@@ -380,8 +413,12 @@ class QuadraticRadical(Real):
     def __mul__(self, other: Complex) -> complex:
         ...
     def __mul__(self, other):
-        if isinstance(other, (Rational, float)):
+        if isinstance(other, float):
             return self * QuadraticRadical(Fraction(*other.as_integer_ratio()))
+        if isinstance(other, Rational):
+            return self * QuadraticRadical(Fraction(
+                int(other.numerator), int(other.denominator)
+            ))
         if not isinstance(other, QuadraticRadical):
             if isinstance(other, Real):
                 return float(self) * other
@@ -412,8 +449,12 @@ class QuadraticRadical(Real):
     def __truediv__(self, other: Complex) -> complex:
         ...
     def __truediv__(self, other):
-        if isinstance(other, (Rational, float)):
+        if isinstance(other, float):
             return self / QuadraticRadical(Fraction(*other.as_integer_ratio()))
+        if isinstance(other, Rational):
+            return self / QuadraticRadical(Fraction(
+                int(other.numerator), int(other.denominator)
+            ))
         if not isinstance(other, QuadraticRadical):
             if isinstance(other, Real):
                 return float(self) / other
@@ -492,8 +533,12 @@ class QuadraticRadical(Real):
         return self * other
 
     def __rtruediv__(self, other):
-        if isinstance(other, (Rational, float)):
+        if isinstance(other, float):
             return QuadraticRadical(Fraction(*other.as_integer_ratio())) / self
+        if isinstance(other, Rational):
+            return QuadraticRadical(Fraction(
+                int(other.numerator), int(other.denominator)
+            )) / self
         if isinstance(other, Real):
             return other / float(self)
         if isinstance(other, Complex):
@@ -501,15 +546,23 @@ class QuadraticRadical(Real):
         return NotImplemented
 
     def __rfloordiv__(self, other):
-        if isinstance(other, (Rational, float)):
+        if isinstance(other, float):
             return QuadraticRadical(Fraction(*other.as_integer_ratio())) //self
+        if isinstance(other, Rational):
+            return QuadraticRadical(Fraction(
+                int(other.numerator), int(other.denominator)
+            )) // self
         if isinstance(other, Real):
             return other // float(self)
         return NotImplemented
 
     def __rmod__(self, other):
-        if isinstance(other, (Rational, float)):
+        if isinstance(other, float):
             return QuadraticRadical(Fraction(*other.as_integer_ratio())) % self
+        if isinstance(other, Rational):
+            return QuadraticRadical(Fraction(
+                int(other.numerator), int(other.denominator)
+            )) % self
         if isinstance(other, Real):
             return other % float(self)
         return NotImplemented
@@ -518,29 +571,24 @@ class QuadraticRadical(Real):
         return other ** float(self)
 
     def __eq__(self, other) -> bool:
-        if not isinstance(other, QuadraticRadical):
-            return float(self) == other
-        return self.quantity == other.quantity
+        if isinstance(other, QuadraticRadical):
+            return self.quantity == other.quantity
+        if isinstance(other, Rational):
+            a = self.rational()
+            return a is not None and a == other
+        return False
 
     def __ne__(self, other) -> bool:
         return not self == other
 
     def __gt__(self, other) -> bool:
-        if not isinstance(other, QuadraticRadical):
-            return float(self).__gt__(other)
         return (self-other).sign() > 0
 
     def __ge__(self, other) -> bool:
-        if not isinstance(other, QuadraticRadical):
-            return float(self).__ge__(other)
         return (self-other).sign() >= 0
 
     def __lt__(self, other) -> bool:
-        if not isinstance(other, QuadraticRadical):
-            return float(self).__lt__(other)
         return (self-other).sign() < 0
 
     def __le__(self, other) -> bool:
-        if not isinstance(other, QuadraticRadical):
-            return float(self).__le__(other)
         return (self-other).sign() <= 0
